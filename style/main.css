@@ -1,0 +1,12 @@
+@font-face {
+	font-family: "HunimalSans";
+	src: url('/font/HunimalSansv1.5.ttf');
+}
+
+#game-canvas {
+	border: 1px solid black;
+}
+
+p {
+	font-family: "HunimalSans";
+}
