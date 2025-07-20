@@ -86,6 +86,9 @@ class Subproblem {
 	}
 
 	draw(ctx) {
+		if (this.cloud.solved && !this.answer) {
+			return;
+		}
 		ctx.font = '38px HunimalSans';
 		ctx.fillStyle = '#000';
 		ctx.textBaseline = 'middle';
@@ -162,6 +165,9 @@ class Cloud {
 	}
 
 	draw(ctx) {
+		if (this.solved) {
+			ctx.globalAlpha = 0.3;
+		}
 		const ncolors = this.colors.length;
 		for (let j=0; j<ncolors; j++) {
 			ctx.fillStyle = this.colors[j];
@@ -187,6 +193,9 @@ class Cloud {
 		ctx.strokeRect(this.center.x+stats.width/2-20, this.center.y-30, 80, 60);
 		if (this.answer) {
 			ctx.fillStyle = '#f00';
+			if (this.solved) {
+				ctx.fillStyle = "#0c0";
+			}
 			ctx.fillText(
 				numToHunString(answerToNumber(this.answer)), 
 				this.center.x+stats.width/2-15, 
@@ -195,6 +204,7 @@ class Cloud {
 		if (this.showSubproblems && this.subproblems.length > 0) {
 			this.subproblems.forEach(prob => prob.draw(ctx));
 		}
+		ctx.globalAlpha = 1;
 	}
 
 	makeParts() {
@@ -276,29 +286,38 @@ class Game {
 	}
 
 	addCloud() {
-		const MAX_TRIES = 10;
-		let madeCloud = false;
-		outer:
-		for (let i=0; i<MAX_TRIES; i++) {
-			const x = this.CLOUD_PAD + Math.floor(Math.random()*(this.width-2*this.CLOUD_PAD));
+		const centers = [];
+		const dists = [];
+		const w = this.width-2*this.CLOUD_PAD;
+		if (this.clouds.length == 0) {
+			const x = this.CLOUD_PAD + Math.floor(Math.random()*w);
 			const y = 100;
 			const center = new Point(x,y);
-			for (let j=0; j<this.clouds.length; j++) {
-				const cloud = this.clouds[j];
-				if (cloud.center.dist(center) < (this.CLOUD_RAD*2)) {
-					continue outer;
-				}
-			}
 			const cloud = new Cloud(this, center);
 			this.clouds.push(cloud);
-			madeCloud = true;
-			break;
-		}
-		if (!madeCloud) {
-			console.log('Failed to make cloud');
-		} else {
 			this.attempted += 1;
+			return;
 		}
+		for (let i=0; i<10; i++) {
+			centers.push(new Point(this.CLOUD_PAD + i/10*w, 100));
+			dists.push(1000);
+			this.clouds.forEach(cloud => {
+				const d = centers.at(-1).dist(cloud.center);
+				if (d < dists.at(-1)) {
+					dists[dists.length-1] = d;
+				}
+			});
+		}
+		let maxidx = 0;
+		for (let i=0; i<dists.length; i++) {
+			if (dists[i] > dists[maxidx]) {
+				maxidx = i;
+			}
+		}
+		const center = centers[maxidx];
+		const cloud = new Cloud(this, center);
+		this.clouds.push(cloud);
+		this.attempted += 1;
 	}
 
 	addListeners() {
@@ -308,6 +327,9 @@ class Game {
 			}
 			if (!this.selected.answer) {
 				this.selected.answer = [];
+			}
+			if (this.selected.solved) {
+				return;
 			}
 			for (let i=0; i<10; i++) {
 				if (e.key === i.toString()) {
@@ -321,17 +343,26 @@ class Game {
 			const trueAnswer = this.selected.num1 * this.selected.num2;
 			if (answerToNumber(this.selected.answer) === trueAnswer) {
 				if (this.selected instanceof Subproblem) {
-					this.selected.solved = true;
 					this.score += 0.3;
+					this.selected.solved = true;
 				} else {
+					let solvedSubproblem = false;
 					this.selected.subproblems.forEach(sub => {
 						if (sub.solved) {
 							this.score -= 0.3;
+							solvedSubproblem = true;
 						}
 					});
-					this.score += 1;
+					if (solvedSubproblem) {
+						this.score += 0.9;
+					} else {
+						this.score += 1;
+					}
+					this.selected.solved = true;
+					this.addCloud();
+					this.selected = this.clouds.at(-1);
 				}
-				const keepClouds = [];
+				/*const keepClouds = [];
 				for (let i=0; i<this.clouds.length; i++) {
 					if (this.clouds[i] == this.selected) {
 						continue;
@@ -341,7 +372,7 @@ class Game {
 				this.clouds = keepClouds;
 				if (this.clouds.length == 0) {
 					this.addCloud();
-				}
+				}*/
 			}
 		});
 		this.canvas.addEventListener('click', e => {
@@ -397,7 +428,7 @@ class Game {
 		ctx.font = '24px HunimalSans';
 		ctx.fillStyle = '#000';
 		ctx.textBaseline = 'middle';
-		ctx.fillText(`Score: ${this.score}`, 20, 30);    
+		ctx.fillText(`Score: ${this.score.toFixed(1)}`, 20, 30);    
 		ctx.fillText(`Attempted: ${this.attempted}`, 300, 30);
 		ctx.fillText(`Level: ${this.level}`, 650, 30);
 	}
