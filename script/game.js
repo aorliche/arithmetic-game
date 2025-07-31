@@ -1,5 +1,6 @@
 
 import {numToHunString} from './util.js';
+import {Sounds} from './sounds.js';
 export {Point, Game};
 
 function answerToNumber(arr) {
@@ -140,7 +141,6 @@ class Cloud {
 	constructor(game, center) {
 		this.center = center.clone();
 		this.game = game;
-		this.speed = game.speed;
 		this.radius = game.CLOUD_RAD;
 		this.colors = ['#cce', '#ddf', '#eef', '#fff', '#fff'];
 		this.makeParts();
@@ -169,6 +169,15 @@ class Cloud {
 			ctx.globalAlpha = 0.3;
 		}
 		const ncolors = this.colors.length;
+		if (this.game.selected == this) {
+			ctx.fillStyle = '#f00';
+			for (let i=0; i<this.parts.length; i++) {
+				const part = this.parts[i];
+				ctx.beginPath();
+				ctx.arc(part.x, part.y, this.radius+2, 0, 2*Math.PI);
+				ctx.fill();
+			}
+		}
 		for (let j=0; j<ncolors; j++) {
 			ctx.fillStyle = this.colors[j];
 			for (let i=0; i<this.parts.length; i++) {
@@ -251,12 +260,34 @@ class Cloud {
 	}
 
 	tick() {
-		this.center.y += this.speed;
+		this.center.y += this.game.speed;
 		this.parts.forEach(part => {
-			part.y += this.speed;
+			part.y += this.game.speed;
 		});
 	}
 }
+
+class Raindrop {
+	constructor(game) {
+		const x = Math.floor(game.canvas.width*Math.random());
+		this.pos = new Point(x, 0);
+		this.game = game;
+		this.length = Math.floor(5+15*Math.random());
+		this.speed = 8+5*Math.random();
+		const colors = ['#448', '#339', '#44b', '#22a'];
+		this.color = colors[Math.floor(4*Math.random())];
+	}
+
+	draw(ctx) {
+		ctx.fillStyle = this.color;
+		ctx.fillRect(this.pos.x, this.pos.y, 1, this.length);
+	}
+
+	tick() {
+		this.pos.y += this.speed;
+	}
+}
+
 		
 class Game {
 	constructor(canvas) {
@@ -271,6 +302,16 @@ class Game {
 		this.score = 0;
 		this.attempted = 0;
 		this.speed = 0.1;
+		this.lives = 5;
+		this.tickCount = 0;
+		this.raindrops = [];
+		this.sounds = new Sounds();
+		this.sounds.loadMusic('1', './sound/Arithmetic1.mp3');
+		this.sounds.loadMusic('2', './sound/Arithmetic2.mp3');
+		this.sounds.loadMusic('3', './sound/Arithmetic3.mp3');
+		this.sounds.loadMusic('4', './sound/Arithmetic4.mp3');
+		this.sounds.loadMusic('5', './sound/Arithmetic5.mp3');
+		this.started = false;
 	}
 
 	get width() {
@@ -359,25 +400,34 @@ class Game {
 						this.score += 1;
 					}
 					this.selected.solved = true;
-					this.addCloud();
-					this.selected = this.clouds.at(-1);
-				}
-				/*const keepClouds = [];
-				for (let i=0; i<this.clouds.length; i++) {
-					if (this.clouds[i] == this.selected) {
-						continue;
+					// Check if all clouds have been solved
+					let allSolved = true;
+					let unsolved = null;
+					for (let i=0; i<this.clouds.length; i++) {
+						if (!this.clouds[i].solved) {
+							allSolved = false;
+							unsolved = this.clouds[i];
+							break;
+						}
 					}
-					keepClouds.push(this.clouds[i]);
+					if (allSolved) {
+						this.addCloud();
+					}
+					if (unsolved != null) {
+						this.selected = unsolved;
+					} else {
+						this.selected = this.clouds.at(-1);
+					}
 				}
-				this.clouds = keepClouds;
-				if (this.clouds.length == 0) {
-					this.addCloud();
-				}*/
 			}
 		});
 		this.canvas.addEventListener('click', e => {
 			const p = new Point(e.offsetX, e.offsetY);
-			console.log(p);
+			if (!this.started) {
+				this.started = true;
+				this.sounds.playMusic('1');
+				return;
+			}
 			this.clouds.forEach(c => c.click(p));
 		});
 	}
@@ -392,6 +442,7 @@ class Game {
 			});
 		}
 		loadImage(this.images, 'background', '/image/background.png');
+		loadImage(this.images, 'heart', '/image/heart.png');
 	}
 
 	loop(now) {
@@ -412,15 +463,22 @@ class Game {
 		const ctx = this.canvas.getContext('2d');
 		ctx.fillStyle = 'white';
 		ctx.fillRect(0, 0, this.width, this.height);
+		if (this.lives <= 0 || !this.started) {
+			ctx.globalAlpha = 0.3;
+			this.selected = null;
+		}
+		// Draw everything after background
 		if (this.images['background']) {
 			const scale = this.images['background'].width / this.canvas.width / 2;
 			const height = this.images['background'].height * scale;
 			const y = this.canvas.height - height;
 			ctx.drawImage(this.images['background'], 0, y, this.canvas.width, height);
 		}
+		this.raindrops.forEach(rain => rain.draw(ctx));
 		for (let i=0; i<this.clouds.length; i++) {
 			this.clouds[i].draw(ctx);
 		}
+		ctx.globalAlpha = 1;
 		// Draw score
 		ctx.fillStyle = '#eef';
 		ctx.fillRect(10, 10, this.canvas.width-20, 40);
@@ -431,6 +489,19 @@ class Game {
 		ctx.fillText(`Score: ${this.score.toFixed(1)}`, 20, 30);    
 		ctx.fillText(`Attempted: ${this.attempted}`, 300, 30);
 		ctx.fillText(`Level: ${this.level}`, 650, 30);
+		if (this.images['heart']) {
+			for (let i=0; i<this.lives; i++) {
+				ctx.drawImage(this.images['heart'], this.canvas.width-40-40*i, 60, 30, 30);
+			}
+		}
+		if (!this.started) {
+			ctx.font = '88px HunimalSans';
+			ctx.fillText('Click to Start', 120, 300);
+		}
+		if (this.lives <= 0) {
+			ctx.font = '88px HunimalSans';
+			ctx.fillText('Game Over!', 150, 300);
+		}
 	}
 
 	start() {
@@ -445,15 +516,71 @@ class Game {
 	}
 
 	tick() {
+		this.tickCount += 1;
+		if (this.tickCount % 1 == 0) {
+			this.raindrops.push(new Raindrop(this));
+			this.raindrops.push(new Raindrop(this));
+		}
+		const keepRaindrops = [];
+		for (let i=0; i<this.raindrops.length; i++) {
+			this.raindrops[i].tick();
+			if (this.raindrops[i].pos.y > this.canvas.height) {
+				continue;
+			}
+			keepRaindrops.push(this.raindrops[i]);
+		}
+		this.raindrops = keepRaindrops;
 		const keep = [];
+		let updateSelected = false;
 		for (let i=0; i<this.clouds.length; i++) {
 			const cloud = this.clouds[i];
-			cloud.tick();
+			if (this.lives > 0) {
+				cloud.tick();
+			}
 			if (cloud.center.y + cloud.radius > this.height) {
+				if (!cloud.solved) {
+					this.lives -= 1;
+					for (let j=0; j<cloud.subproblems.length; j++) {
+						if (this.selected == cloud.subproblems[j]) {
+							updateSelected = true;
+						}
+					}
+					if (this.selected = cloud) {
+						updateSelected = true;
+					}
+				}
 				continue;
 			}
 			keep.push(cloud);
 		}
 		this.clouds = keep;
+		if (this.lives <= 0) {
+			return;
+		}
+		// Add clouds
+		let addCloud = true;
+		for (let i=0; i<this.clouds.length; i++) {
+			if (this.clouds[i].center.y < 300) {
+				addCloud = false;
+				break;
+			}
+		}
+		if (addCloud) {
+			this.addCloud();
+		}
+		// Increase level
+		if (this.score.toFixed(1) >= 5*this.level) {
+			this.speed += 0.1;
+			// Change music
+			this.sounds.playMusic(`${this.level%5+1}`);
+		}
+		if (updateSelected) {
+			for (let i=0; i<this.clouds.length; i++) {
+				if (!this.clouds[i].solved) {
+					this.selected = this.clouds[i];
+					break;
+				}
+			}
+		}
 	}
 }
