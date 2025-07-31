@@ -441,8 +441,8 @@ class Game {
 				images[name] = img;
 			});
 		}
-		loadImage(this.images, 'background', '/image/background.png');
-		loadImage(this.images, 'heart', '/image/heart.png');
+		loadImage(this.images, 'background', './image/background.png');
+		loadImage(this.images, 'heart', './image/heart.png');
 	}
 
 	loop(now) {

@@ -1,6 +1,6 @@
 @font-face {
 	font-family: "HunimalSans";
-	src: url('/font/HunimalSansv1.5.ttf');
+	src: url('./../font/HunimalSansv1.5.ttf');
 }
 
 #game-canvas {
