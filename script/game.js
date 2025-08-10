@@ -123,7 +123,7 @@ class Subproblem {
 			ctx.fillText(this.text, this.center.x-stats.width/2-20, this.center.y);
 			ctx.lineWidth = 2;
 			ctx.strokeRect(this.center.x+stats.width/2-60, this.center.y-20, 60, 40);
-			if (this.answer) {
+			if (this.answer && this.answer.length > 0) {
 				ctx.fillStyle = '#f00';
 				if (this.solved) {
 					ctx.fillStyle = '#0c0';
@@ -200,7 +200,7 @@ class Cloud {
 		ctx.lineWidth = 5;
 		ctx.lineJoin = 'bevel';
 		ctx.strokeRect(this.center.x+stats.width/2-20, this.center.y-30, 80, 60);
-		if (this.answer) {
+		if (this.answer && this.answer.length > 0) {
 			ctx.fillStyle = '#f00';
 			if (this.solved) {
 				ctx.fillStyle = "#0c0";
@@ -426,6 +426,7 @@ class Game {
 			if (!this.started) {
 				this.started = true;
 				this.sounds.playMusic('1');
+				this.selected = this.clouds.at(-1);
 				return;
 			}
 			this.clouds.forEach(c => c.click(p));

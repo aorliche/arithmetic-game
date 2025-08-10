@@ -7,6 +7,20 @@
 	border: 1px solid black;
 }
 
-p {
+.hunimal-font {
 	font-family: "HunimalSans";
+}
+
+.pink {
+	background-color: #fcc;
+	cursor: pointer;
+}
+
+#numpad {
+	border: 1px solid black;
+}
+
+#num-delete {
+	display: inline-block;
+	vertical-align: top;
 }

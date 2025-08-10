@@ -34,6 +34,9 @@ function circShift(arr, n) {
 }
 
 function numToHunString(num) {
+	if (num == 0) {
+		return String.fromCharCode(0x5500);
+	}
 	const huns = [];
 	while (num > 0) {
 		const hun = num % 100;
