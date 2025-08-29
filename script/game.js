@@ -15,6 +15,27 @@ function answerToNumber(arr) {
 	return answer;
 }
 
+function getCheckedOps() {
+	const addChecked = $('#addCb').checked;
+	const subChecked = $('#subCb').checked;
+	const multChecked = $('#multCb').checked;
+	const divChecked = $('#divCb').checked;
+	const ops = [];
+	if (addChecked) {
+		ops.push('add');
+	}
+	if (subChecked) {
+		ops.push('sub');
+	}
+	if (multChecked) {
+		ops.push('mult');
+	}
+	if (divChecked) {
+		ops.push('div');
+	}
+	return ops;
+}
+
 class Rect {
 	constructor(topLeft, dims) {
 		this.topLeft = topLeft;
@@ -234,26 +255,7 @@ class Cloud {
 	}
 
 	makeQuestion() {
-		const addChecked = $('#addCb').checked;
-		const subChecked = $('#subCb').checked;
-		let multChecked = $('#multCb').checked;
-		const divChecked = $('#divCb').checked;
-		if (!addChecked && !subChecked && !multChecked && !divChecked) {
-			multChecked = true;
-		}
-		const ops = [];
-		if (addChecked) {
-			ops.push('add');
-		}
-		if (subChecked) {
-			ops.push('sub');
-		}
-		if (multChecked) {
-			ops.push('mult');
-		}
-		if (divChecked) {
-			ops.push('div');
-		}
+		const ops = getCheckedOps();
 		this.op = ops[Math.floor(ops.length*Math.random())];
 		this.num1 = Math.floor(99*Math.random())+1;
 		this.num2 = Math.floor(99*Math.random())+1;
@@ -376,6 +378,27 @@ class Game {
 	}
 
 	addCloud() {
+		if (this.cloudAddTimeoutSet) {
+			return;
+		}
+		if (getCheckedOps().length == 0) {
+			this.cloudAddTimeoutSet = true;
+			setTimeout(e => {
+				this.cloudAddTimeoutSet = false;
+				let updateSel = true;
+				for (let i=0; i<this.clouds.length; i++) {
+					if (!this.clouds[i].solved) {
+						updateSel = false;
+						break;
+					}
+				}
+				this.addCloud();
+				if (updateSel) {
+					this.selected = this.clouds.at(-1);
+				}
+			}, 1000);
+			return;
+		}
 		const centers = [];
 		const dists = [];
 		const w = this.width-2*this.CLOUD_PAD;
@@ -501,7 +524,7 @@ class Game {
 				images[name] = img;
 			});
 		}
-		loadImage(this.images, 'background', './image/background.png');
+		loadImage(this.images, 'background', './image/background2.png');
 		loadImage(this.images, 'heart', './image/heart.png');
 	}
 
@@ -529,10 +552,11 @@ class Game {
 		}
 		// Draw everything after background
 		if (this.images['background']) {
-			const scale = this.images['background'].width / this.canvas.width / 2;
+			/*const scale = this.images['background'].width / this.canvas.width / 2;
 			const height = this.images['background'].height * scale;
 			const y = this.canvas.height - height;
-			ctx.drawImage(this.images['background'], 0, y, this.canvas.width, height);
+			ctx.drawImage(this.images['background'], 0, y, this.canvas.width, height);*/
+			ctx.drawImage(this.images['background'], 0, 0, this.canvas.width, this.canvas.height);
 		}
 		this.raindrops.forEach(rain => rain.draw(ctx));
 		for (let i=0; i<this.clouds.length; i++) {
