@@ -71,14 +71,24 @@ class Point {
 }
 
 class Subproblem {
-	constructor(op, num1, num2, cloud, theta) {
+	constructor(op, num1, num2, cloud, theta, overtext) {
 		if (['add', 'sub', 'mult', 'div'].indexOf(op) == -1) {
 			throw `Bad operation: ${op}`;
 		}
 		this.op = op;
 		this.num1 = num1;
 		this.num2 = num2;
-		this.text = `${numToHunString(this.num1)}*${numToHunString(this.num2)} = `;
+		let textop = '*';
+		switch (this.op) {
+			case 'add': textop = '+'; break;
+			case 'sub': textop = '-'; break;
+			case 'mul': textop = '*'; break;
+			case 'div': textop = '/'; break;
+		}
+		this.text = `${numToHunString(this.num1)}${textop}${numToHunString(this.num2)} = `;
+		if (overtext) {
+			this.text = overtext;
+		}
 		this.cloud = cloud;
 		this.theta = theta;
 		this.dimensions = null;
@@ -91,6 +101,10 @@ class Subproblem {
 	}
 
 	click(p) {
+		if (p == true) {
+			this.cloud.game.selected = this;
+			return;
+		}
 		if (this.solved) {
 			return;
 		}
@@ -141,7 +155,11 @@ class Subproblem {
 		} else {
 			ctx.fillStyle = "#000";
 			ctx.font = "24px HunimalSans";
-			ctx.fillText(this.text, this.center.x-stats.width/2-20, this.center.y);
+			if (this.text[0] == 'F') {
+				ctx.fillText(this.text, this.center.x-stats.width/2+10, this.center.y);
+			} else {
+				ctx.fillText(this.text, this.center.x-stats.width/2-20, this.center.y);
+			}
 			ctx.lineWidth = 2;
 			ctx.strokeRect(this.center.x+stats.width/2-60, this.center.y-20, 60, 40);
 			if (this.answer && this.answer.length > 0) {
@@ -169,6 +187,9 @@ class Cloud {
 		if (this.op == 'mult') {
 			this.showSubproblems = true;
 			this.makeRoundedSubproblemParts();
+		} else if (this.op == 'div') {
+			this.showSubproblems = true;
+			this.makeDivSubproblemParts();
 		} else {
 			this.showSubproblems = false;
 			this.subproblems = [];
@@ -176,6 +197,10 @@ class Cloud {
 	}
 
 	click(p) {
+		if (p == true) {
+			this.game.selected = this;
+			return;
+		}
 		if (this.center.dist(p) < 1.5*this.radius) {
 			for (let i=0; i<this.subproblems.length; i++) {
 				const inside = this.subproblems[i].click(p);
@@ -307,6 +332,36 @@ class Cloud {
 		}
 		this.subproblems.push(new Subproblem('mult', num1round, num2, this, theta));
 		this.subproblems.push(new Subproblem('mult', Math.abs(d1), num2, this, theta+Math.PI));
+	}
+
+	makeDivSubproblemParts() {
+		this.subproblems = [];
+		let num1sig = Math.floor(this.num1/100);
+		let num1round = num1sig * 100;
+		if (num1sig / this.num2 < 1) {
+			num1sig = Math.floor(this.num1/10);
+			num1round = num1sig * 10;
+		}
+		// Too easy
+		if (num1sig / this.num2 < 1) {
+			return;
+		}
+		const ans = Math.floor(num1sig / this.num2);
+		const theta = Math.PI/4+Math.random()*Math.PI/2;
+		this.subproblems.push(new Subproblem('div', num1sig, this.num2, this, theta, 
+			`Floor(${numToHunString(num1sig)}/${numToHunString(this.num2)})=`));
+		// Assume num1/num2 always integer
+		if (this.num1 / this.num2 > 9) {
+			this.subproblems.at(-1).cb = _ => {
+				this.subproblems.push(new Subproblem('mult', this.num2, 10*ans, this, theta+Math.PI));
+				if ((this.num2 * 10 * ans) != this.num1) {
+					this.subproblems.at(-1).cb = _ => {
+						this.subproblems.push(new Subproblem('sub', this.num1, this.num2*10*ans, this,
+							theta+3/2*Math.PI));
+					}
+				}
+			}
+		}
 	}
 
 	tick() {
@@ -457,12 +512,21 @@ class Game {
 			switch (this.selected.op) {
 				case 'add': trueAnswer = this.selected.num1 + this.selected.num2; break;
 				case 'sub': trueAnswer = this.selected.num1 - this.selected.num2; break;
-				case 'div': trueAnswer = this.selected.num1 / this.selected.num2; break;
+				case 'div': trueAnswer = Math.floor(this.selected.num1 / this.selected.num2); break;
 			}
 			if (answerToNumber(this.selected.answer) === trueAnswer) {
 				if (this.selected instanceof Subproblem) {
 					this.score += 0.3;
 					this.selected.solved = true;
+					// Make second, third, etc. subproblem
+					if (this.selected.cb) {
+						this.selected.cb();
+					}
+					if (!this.selected.cloud.subproblems.at(-1).sovled) {
+						this.selected.cloud.subproblems.at(-1).click(true);
+					} else {
+						this.selected.cloud.click(true);
+					}
 				} else {
 					let solvedSubproblem = false;
 					this.selected.subproblems.forEach(sub => {
@@ -510,9 +574,24 @@ class Game {
 		});
 		$('#changeMusic').addEventListener('click', e => {
 			e.preventDefault();
-			this.currentMusic = ((this.currentMusic+1)%5) + 1;
+			this.musicPaused = false;
+			this.currentMusic = (this.currentMusic+1)%5+1;
 			this.sounds.playMusic(this.currentMusic.toString());
+			$('#stopMusic').innerHTML = 'Stop Music';
 		});
+		$('#stopMusic').addEventListener('click', e => {
+			e.preventDefault();
+			if (this.musicPaused) {
+				this.sounds.playMusic(this.currentMusic.toString());
+				this.musicPaused = false;
+				$('#stopMusic').innerHTML = 'Stop Music';
+			} else {
+				this.sounds.stopMusic(this.currentMusic.toString());
+				this.musicPaused = true;
+				$('#stopMusic').innerHTML = 'Play Music';
+			}
+		});
+
 	}
 
 	loadImages() {
