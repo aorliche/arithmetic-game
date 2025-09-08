@@ -125,6 +125,9 @@ class Subproblem {
 		if (this.cloud.solved && !this.answer) {
 			return;
 		}
+		if (this.hide) {
+			return;
+		}
 		ctx.font = '38px HunimalSans';
 		ctx.fillStyle = '#000';
 		ctx.textBaseline = 'middle';
@@ -353,11 +356,12 @@ class Cloud {
 		// Assume num1/num2 always integer
 		if (this.num1 / this.num2 > 9) {
 			this.subproblems.at(-1).cb = _ => {
-				this.subproblems.push(new Subproblem('mult', this.num2, 10*ans, this, theta+3/4*Math.PI));
+				this.subproblems.push(new Subproblem('mult', this.num2, 10*ans, this, theta+Math.PI));
 				if ((this.num2 * 10 * ans) != this.num1) {
 					this.subproblems.at(-1).cb = _ => {
+						this.subproblems.at(-2).hide = true;
 						this.subproblems.push(new Subproblem('sub', this.num1, this.num2*10*ans, this,
-							theta+5/4*Math.PI));
+							theta));
 					}
 				}
 			}
