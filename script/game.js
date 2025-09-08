@@ -95,7 +95,7 @@ class Subproblem {
 	}
 
 	get center() {
-		const dx = 100*Math.cos(this.theta);
+		const dx = 120*Math.cos(this.theta);
 		const dy = 80*Math.sin(this.theta);
 		return this.cloud.center.add(new Point(dx, dy));
 	}
@@ -156,7 +156,7 @@ class Subproblem {
 			ctx.fillStyle = "#000";
 			ctx.font = "24px HunimalSans";
 			if (this.text[0] == 'F') {
-				ctx.fillText(this.text, this.center.x-stats.width/2+10, this.center.y);
+				ctx.fillText(this.text, this.center.x-stats.width/2+20, this.center.y);
 			} else {
 				ctx.fillText(this.text, this.center.x-stats.width/2-20, this.center.y);
 			}
@@ -353,11 +353,11 @@ class Cloud {
 		// Assume num1/num2 always integer
 		if (this.num1 / this.num2 > 9) {
 			this.subproblems.at(-1).cb = _ => {
-				this.subproblems.push(new Subproblem('mult', this.num2, 10*ans, this, theta+Math.PI));
+				this.subproblems.push(new Subproblem('mult', this.num2, 10*ans, this, theta+3/4*Math.PI));
 				if ((this.num2 * 10 * ans) != this.num1) {
 					this.subproblems.at(-1).cb = _ => {
 						this.subproblems.push(new Subproblem('sub', this.num1, this.num2*10*ans, this,
-							theta+3/2*Math.PI));
+							theta+5/4*Math.PI));
 					}
 				}
 			}
