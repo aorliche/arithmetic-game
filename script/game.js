@@ -422,6 +422,12 @@ class Game {
 		this.sounds.loadMusic('5', './sound/Arithmetic5.mp3');
 		this.started = false;
 		this.currentMusic = 1;
+		this.backgrounds = ['butterfly', 'abacus', 'wisdom', 'kitchen', 'river', 'trex'];
+		this.curBackgroundIdx = 0;
+		this.time = 0;
+		setInterval(e => {
+			this.time += 1;
+		}, 1000);
 	}
 
 	get width() {
@@ -532,6 +538,7 @@ class Game {
 						this.selected.cloud.click(true);
 					}
 				} else {
+					this.time = 0;
 					let solvedSubproblem = false;
 					this.selected.subproblems.forEach(sub => {
 						if (sub.solved) {
@@ -595,7 +602,10 @@ class Game {
 				$('#stopMusic').innerHTML = 'Play Music';
 			}
 		});
-
+		$('#changeBackground').addEventListener('click', e => {
+			e.preventDefault();
+			this.curBackgroundIdx = (this.curBackgroundIdx+1)%this.backgrounds.length;
+		});
 	}
 
 	loadImages() {
@@ -607,7 +617,12 @@ class Game {
 				images[name] = img;
 			});
 		}
-		loadImage(this.images, 'background', './image/background2.png');
+		loadImage(this.images, 'background-abacus', './image/background/Abacus.png');
+		loadImage(this.images, 'background-butterfly', './image/background/Butterfly.png');
+		loadImage(this.images, 'background-wisdom', './image/background/JuniorsAndSeniors.png');
+		loadImage(this.images, 'background-kitchen', './image/background/Kitchen.png');
+		loadImage(this.images, 'background-river', './image/background/River.png');
+		loadImage(this.images, 'background-trex', './image/background/TRex.png');
 		loadImage(this.images, 'heart', './image/heart.png');
 	}
 
@@ -634,12 +649,13 @@ class Game {
 			this.selected = null;
 		}
 		// Draw everything after background
-		if (this.images['background']) {
+		const bg = 'background-' + this.backgrounds[this.curBackgroundIdx];
+		if (this.images[bg]) {
 			/*const scale = this.images['background'].width / this.canvas.width / 2;
 			const height = this.images['background'].height * scale;
 			const y = this.canvas.height - height;
 			ctx.drawImage(this.images['background'], 0, y, this.canvas.width, height);*/
-			ctx.drawImage(this.images['background'], 0, 0, this.canvas.width, this.canvas.height);
+			ctx.drawImage(this.images[bg], 0, 0, this.canvas.width, this.canvas.height);
 		}
 		this.raindrops.forEach(rain => rain.draw(ctx));
 		for (let i=0; i<this.clouds.length; i++) {
@@ -654,7 +670,11 @@ class Game {
 		ctx.fillStyle = '#000';
 		ctx.textBaseline = 'middle';
 		ctx.fillText(`Score: ${this.score.toFixed(1)}`, 20, 30);    
-		ctx.fillText(`Attempted: ${this.attempted}`, 300, 30);
+		ctx.fillText(`Attempted: ${this.attempted}`, 200, 30);
+		const tsec = this.time % 60;
+		const tsec2 = tsec >= 10 ? tsec : '0' + tsec;
+		const time = `${Math.floor(this.time/60)}:${tsec2}`;
+		ctx.fillText(`Time Spent: ${time}`, 400, 30);
 		ctx.fillText(`Level: ${this.level}`, 650, 30);
 		if (this.images['heart']) {
 			for (let i=0; i<this.lives; i++) {
@@ -739,8 +759,12 @@ class Game {
 		if (this.score.toFixed(1) >= 5*this.level) {
 			this.speed += 0.1;
 			// Change music
-			this.currentMusic = ((this.currentMusic+1) % 5) + 1
+			// This is weird because music starts at 1
+			this.currentMusic = ((this.currentMusic+1) % 5) + 1;
 			this.sounds.playMusic(this.currentMusic.toString());
+			// Change image
+			// Background idx starts at 0
+			this.curBackgroundIdx = ((this.curBackgroundIdx+1) % this.backgrounds.length);
 		}
 		if (updateSelected) {
 			for (let i=0; i<this.clouds.length; i++) {
