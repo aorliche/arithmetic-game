@@ -285,8 +285,37 @@ class Cloud {
 	makeQuestion() {
 		const ops = getCheckedOps();
 		this.op = ops[Math.floor(ops.length*Math.random())];
-		this.num1 = Math.floor(99*Math.random())+1;
-		this.num2 = Math.floor(99*Math.random())+1;
+		// Mult choices
+		if (this.op == 'mult') {
+			const bag1 = [];
+			const bag2 = [];
+			for (let i=0; i<10; i++) {
+				if (this.game.multChoice1[i]) {
+					bag1.push(Math.floor(10*Math.random())+10*i)
+					if (bag1.at(-1) == 0) {
+						bag1.pop();
+						bag1.push(1);
+					}
+				}
+				if (this.game.multChoice2[i]) {
+					bag2.push(Math.floor(10*Math.random())+10*i)
+					if (bag2.at(-1) == 0) {
+						bag2.pop();
+						bag2.push(1);
+					}
+				}
+			}
+			if (bag1.length == 0) {
+				bag1.push(Math.floor(99*Math.random())+1);
+			}
+			if (bag2.length == 0) {
+				bag2.push(Math.floor(99*Math.random())+1);
+			}
+			this.num1 = bag1[Math.floor(bag1.length*Math.random())];
+			this.num2 = bag2[Math.floor(bag2.length*Math.random())];
+		}
+		//this.num1 = Math.floor(99*Math.random())+1;
+		//this.num2 = Math.floor(99*Math.random())+1;
 		let opString = '*';
 		let ans = this.num1*this.num2;
 		switch (this.op) {
@@ -428,6 +457,13 @@ class Game {
 		setInterval(e => {
 			this.time += 1;
 		}, 1000);
+		// Mult choice
+		this.multChoice1 = [];
+		this.multChoice2 = [];
+		for (let i=0; i<10; i++) {
+			this.multChoice1.push(true);
+			this.multChoice2.push(true);
+		}
 	}
 
 	get width() {

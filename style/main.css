@@ -24,3 +24,12 @@
 	display: inline-block;
 	vertical-align: top;
 }
+
+#choices-div {
+	display: inline-block;
+	vertical-align: top;
+}
+
+#multchoice {
+	border: 1px solid black;
+}
