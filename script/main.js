@@ -87,8 +87,6 @@ window.addEventListener('load', e => {
 			cb.checked = false;
 			cb.dispatchEvent(new Event('change'));
 		});
-		console.log(game.multChoice1);
-		console.log(game.multChoice2);
 	});
 	$('#setAllChoices').addEventListener('click', e => {
 		e.preventDefault();
@@ -96,7 +94,5 @@ window.addEventListener('load', e => {
 			cb.checked = true;
 			cb.dispatchEvent(new Event('change'));
 		});
-		console.log(game.multChoice1);
-		console.log(game.multChoice2);
 	});
 });
