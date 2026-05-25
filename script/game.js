@@ -82,7 +82,7 @@ class Subproblem {
 		switch (this.op) {
 			case 'add': textop = '+'; break;
 			case 'sub': textop = '-'; break;
-			case 'mul': textop = '*'; break;
+			case 'mult': textop = '*'; break;
 			case 'div': textop = '/'; break;
 		}
 		this.text = `${numToHunString(this.num1)}${textop}${numToHunString(this.num2)} = `;
@@ -574,6 +574,9 @@ class Game {
 						this.selected.cloud.click(true);
 					}
 				} else {
+					// Update server that we have solved a problem
+					fetch(`add_solved.php?op=${this.selected.op}&num1=${this.selected.num1}&num2=${this.selected.num2}&time=${this.time}`);
+					// Solved logic
 					this.time = 0;
 					let solvedSubproblem = false;
 					this.selected.subproblems.forEach(sub => {
