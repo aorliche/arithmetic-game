@@ -34,12 +34,19 @@
 </head>
 <body>
 <table>
-<tr><th>Op</th><th>Num1</th><th>Num2</th><th>Time to Solve</th><th>When</th></tr>
+<tr><th>Op</th><th>Num1</th><th>Num2</th><th>Answer</th><th>Time to Solve</th><th>When</th></tr>
 <?php
 	while ($row = $res->fetch_assoc()) {
 		$op = $row['op'];
-		$num1 = $row['num1'];
-		$num2 = $row['num2'];
+		$num1 = intval($row['num1']);
+		$num2 = intval($row['num2']);
+		$answer = 0;
+		switch($op) {
+		case 'add': $answer = $num1+$num2; break;
+		case 'sub': $answer = $num1-$num2; break;
+		case 'mult': $answer = $num1*$num2; break;
+		case 'div': $answer = floor($num1/$num2); break;
+		}
 		$time = $row['time_seconds'];
 		$ts = $row['ts'];
 		$delta = ($now-$ts);
@@ -65,6 +72,7 @@
 		echo "<td>$op</td>";
 		echo "<td>$num1</td>";
 		echo "<td>$num2</td>";
+		echo "<td>$answer</td>";
 		echo "<td>$time</td>";
 		echo "<td>$delta</td>";
 		echo "</tr>";
