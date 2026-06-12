@@ -287,32 +287,38 @@ class Cloud {
 		this.op = ops[Math.floor(ops.length*Math.random())];
 		// Mult choices
 		if (this.op == 'mult') {
-			const bag1 = [];
-			const bag2 = [];
-			for (let i=0; i<10; i++) {
-				if (this.game.multChoice1[i]) {
-					bag1.push(Math.floor(10*Math.random())+10*i)
-					if (bag1.at(-1) == 0) {
-						bag1.pop();
-						bag1.push(1);
+			// David's special request
+			if ($('#mult-two-digits').checked) {
+				this.num1 = Math.floor(10000*Math.random());
+				this.num2 = Math.floor(10000*Math.random());
+			} else {
+				const bag1 = [];
+				const bag2 = [];
+				for (let i=0; i<10; i++) {
+					if (this.game.multChoice1[i]) {
+						bag1.push(Math.floor(10*Math.random())+10*i)
+						if (bag1.at(-1) == 0) {
+							bag1.pop();
+							bag1.push(1);
+						}
+					}
+					if (this.game.multChoice2[i]) {
+						bag2.push(Math.floor(10*Math.random())+10*i)
+						if (bag2.at(-1) == 0) {
+							bag2.pop();
+							bag2.push(1);
+						}
 					}
 				}
-				if (this.game.multChoice2[i]) {
-					bag2.push(Math.floor(10*Math.random())+10*i)
-					if (bag2.at(-1) == 0) {
-						bag2.pop();
-						bag2.push(1);
-					}
+				if (bag1.length == 0) {
+					bag1.push(Math.floor(99*Math.random())+1);
 				}
+				if (bag2.length == 0) {
+					bag2.push(Math.floor(99*Math.random())+1);
+				}
+				this.num1 = bag1[Math.floor(bag1.length*Math.random())];
+				this.num2 = bag2[Math.floor(bag2.length*Math.random())];
 			}
-			if (bag1.length == 0) {
-				bag1.push(Math.floor(99*Math.random())+1);
-			}
-			if (bag2.length == 0) {
-				bag2.push(Math.floor(99*Math.random())+1);
-			}
-			this.num1 = bag1[Math.floor(bag1.length*Math.random())];
-			this.num2 = bag2[Math.floor(bag2.length*Math.random())];
 		}
 		//this.num1 = Math.floor(99*Math.random())+1;
 		//this.num2 = Math.floor(99*Math.random())+1;
