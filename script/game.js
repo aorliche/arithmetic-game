@@ -289,8 +289,8 @@ class Cloud {
 		if (this.op == 'mult') {
 			// David's special request
 			if ($('#mult-two-digits').checked) {
-				this.num1 = Math.floor(10000*Math.random());
-				this.num2 = Math.floor(10000*Math.random());
+				this.num1 = Math.floor(9900*Math.random())+100;
+				this.num2 = Math.floor(9900*Math.random())+100;
 			} else {
 				const bag1 = [];
 				const bag2 = [];
@@ -326,8 +326,16 @@ class Cloud {
 		let ans = this.num1*this.num2;
 		switch (this.op) {
 			case 'add': 
-				this.num1 = Math.floor(5000*Math.random())+1;
-				this.num2 = Math.floor(5000*Math.random())+1;
+				if ($('#add-one').checked) {
+					this.num1 = Math.floor(99*Math.random())+1;
+					this.num2 = Math.floor(99*Math.random())+1;
+				} else if ($('#add-two').checked) {
+					this.num1 = Math.floor(5000*Math.random())+1;
+					this.num2 = Math.floor(5000*Math.random())+1;
+				} else {
+					this.num1 = Math.floor((100*100*100-100)*Math.random())+10000;
+					this.num2 = Math.floor((100*100*100-100)*Math.random())+10000;
+				}
 				opString = '+';
 				ans = this.num1+this.num2;
 				break;
