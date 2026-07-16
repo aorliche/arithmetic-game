@@ -465,7 +465,9 @@ class Game {
 		this.sounds.loadMusic('5', './sound/Arithmetic5.mp3');
 		this.started = false;
 		this.currentMusic = 1;
-		this.backgrounds = ['butterfly', 'abacus', 'wisdom', 'kitchen', 'river', 'trex'];
+		this.backgrounds = [
+			'jetpack', 'disco', 'meat', 'gaming', 'science', 'soyuz',
+			'butterfly', 'abacus', 'wisdom', 'kitchen', 'river', 'trex'];
 		this.curBackgroundIdx = 0;
 		this.time = 0;
 		setInterval(e => {
@@ -676,6 +678,12 @@ class Game {
 		loadImage(this.images, 'background-kitchen', './image/background/Kitchen.png');
 		loadImage(this.images, 'background-river', './image/background/River.png');
 		loadImage(this.images, 'background-trex', './image/background/TRex.png');
+		loadImage(this.images, 'background-jetpack', './image/background2/JetpackHangGlider.png');
+		loadImage(this.images, 'background-disco', './image/background2/Disco.png');
+		loadImage(this.images, 'background-meat', './image/background2/LabGrownMeat.png');
+		loadImage(this.images, 'background-gaming', './image/background2/Gaming.png');
+		loadImage(this.images, 'background-science', './image/background2/Science.png');
+		loadImage(this.images, 'background-soyuz', './image/background2/CrocodileSoyuz.png');
 		loadImage(this.images, 'heart', './image/heart.png');
 	}
 
