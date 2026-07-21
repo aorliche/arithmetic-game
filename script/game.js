@@ -193,6 +193,9 @@ class Cloud {
 			game.wcIndex++;
 		} else {
 			this.makeQuestion();
+			if (game.wcIndex > 0) {
+				game.wcIndex++;
+			}
 		}
 		if (this.op == 'mult') {
 			this.showSubproblems = true;
@@ -504,6 +507,7 @@ class Game {
 		this.wcScreen = new WeeklyChallengeScreen({
 			yes: () => {
 				this.inwc = true;
+				this.name = this.wcScreen.field.text;
 				fetch('../go/week1.json')
 				.then(resp => resp.json())
 				.then(json => {
@@ -781,6 +785,37 @@ class Game {
 		if (this.inwc !== false && this.inwc !== true) {
 			this.wcScreen.draw(ctx);
 			return;
+		}
+		// If we've finished the weekly challenge, display a splash screen with
+		// the user's score
+		if (this.inwc && 
+			((this.wcQs.length > 0 && this.wcIndex > this.wcQs.length) 
+				|| this.wcTime >= 5*60)) {
+			if (!this.fetchedPct) {
+				this.fetchedPct = true;
+				fetch(`weeklyStats.php?week=1&name=${this.name}&score=${this.score}`)
+				.then(resp => resp.json())
+				.then(json => {
+					this.topPct = json.topPct.toFixed(1);
+				})
+				.catch(err => console.log(err));
+			}
+			if (this.topPct || this.topPct === 0) {
+				ctx.save();
+				ctx.fillStyle = '#fff';
+				ctx.strokeStyle = '#303';
+				ctx.lineWidth = 3;
+				ctx.globalAlpha = 0.8;
+				ctx.fillRect(0, 200, 800, 200);
+				ctx.globalAlpha = 1;
+				ctx.strokeRect(0, 200, 800, 200);
+				ctx.fillStyle = '#303';
+				ctx.font = '42px HunimalSans';
+				ctx.fillText('Your score: ' + this.score, 250, 260);
+				ctx.fillText(`You are in the top ${this.topPct}% of players.`, 50, 335);
+				ctx.restore();
+				return;
+			}
 		}
 		for (let i=0; i<this.clouds.length; i++) {
 			this.clouds[i].draw(ctx);
