@@ -1,6 +1,7 @@
 
 import {$, numToHunString} from './util.js';
 import {Sounds} from './sounds.js';
+import {WeeklyChallengeScreen} from './hud.js';
 export {Point, Game};
 
 function answerToNumber(arr) {
@@ -186,7 +187,13 @@ class Cloud {
 		this.radius = game.CLOUD_RAD;
 		this.colors = ['#cce', '#ddf', '#eef', '#fff', '#fff'];
 		this.makeParts();
-		this.makeQuestion();
+		// Weekly challenge
+		if (game.inwc && game.wcIndex < game.wcQs.length) {
+			this.makeQuestionWC(game.wcQs[game.wcIndex]);
+			game.wcIndex++;
+		} else {
+			this.makeQuestion();
+		}
 		if (this.op == 'mult') {
 			this.showSubproblems = true;
 			this.makeRoundedSubproblemParts();
@@ -280,6 +287,15 @@ class Cloud {
 			const y = this.center.y + d*Math.sin(theta)/2;
 			this.parts.push(new Point(x, y));
 		}
+	}
+
+	makeQuestionWC(q) {
+		this.op = q.Op;
+		this.num1 = q.Num1;
+		this.num2 = q.Num2;
+		const opString = q.OpStr;
+		this.text = `${numToHunString(this.num1)}${opString}${numToHunString(this.num2)} = `;
+		console.log('Answer: ' + q.Ans);
 	}
 
 	makeQuestion() {
@@ -470,8 +486,12 @@ class Game {
 			'butterfly', 'abacus', 'wisdom', 'kitchen', 'river', 'trex'];
 		this.curBackgroundIdx = 0;
 		this.time = 0;
+		this.wcTime = 0;
 		setInterval(e => {
 			this.time += 1;
+			if (this.inwc) {
+				this.wcTime += 1;
+			}
 		}, 1000);
 		// Mult choice
 		this.multChoice1 = [];
@@ -480,6 +500,30 @@ class Game {
 			this.multChoice1.push(true);
 			this.multChoice2.push(true);
 		}
+		// Weekly challenge screen
+		this.wcScreen = new WeeklyChallengeScreen({
+			yes: () => {
+				this.inwc = true;
+				fetch('../go/week1.json')
+				.then(resp => resp.json())
+				.then(json => {
+					this.wcQs = json;
+				})
+				.then(() => {
+					this.clouds = [];
+					this.attempted = 0;
+					this.addCloud();
+					this.startAfterInteraction();
+				})
+				.catch(err => console.log(err));
+			},
+			no: () => {
+				this.inwc = false;
+				this.startAfterInteraction();
+			},
+		});
+		this.wcQs = [];
+		this.wcIndex = 0;
 	}
 
 	get width() {
@@ -552,6 +596,10 @@ class Game {
 
 	addListeners() {
 		this.canvas.addEventListener('keydown', e => {
+			if (this.wcScreen.state == 'enter-name') {
+				this.wcScreen.keydown(e);
+				return;
+			}
 			if (!this.selected) {
 				return;
 			}
@@ -630,13 +678,26 @@ class Game {
 		});
 		this.canvas.addEventListener('click', e => {
 			const p = new Point(e.offsetX, e.offsetY);
+			if (this.wcScreen.state != 'hidden') {
+				this.wcScreen.click(p);
+				return;
+			}
 			if (!this.started) {
-				this.started = true;
-				this.sounds.playMusic(this.currentMusic.toString());
-				this.selected = this.clouds.at(-1);
+				this.startAfterInteraction();
 				return;
 			}
 			this.clouds.forEach(c => c.click(p));
+		});
+		this.canvas.addEventListener('mousemove', e => {
+			const p = new Point(e.offsetX, e.offsetY);
+			if (this.wcScreen.state != 'hidden') {
+				this.wcScreen.mousemove(p);
+			}
+		});
+		this.canvas.addEventListener('mouseout', e => {
+			if (this.wcScreen.state != 'hidden') {
+				this.wcScreen.mouseout();
+			}
 		});
 		$('#changeMusic').addEventListener('click', e => {
 			e.preventDefault();
@@ -712,13 +773,15 @@ class Game {
 		// Draw everything after background
 		const bg = 'background-' + this.backgrounds[this.curBackgroundIdx];
 		if (this.images[bg]) {
-			/*const scale = this.images['background'].width / this.canvas.width / 2;
-			const height = this.images['background'].height * scale;
-			const y = this.canvas.height - height;
-			ctx.drawImage(this.images['background'], 0, y, this.canvas.width, height);*/
 			ctx.drawImage(this.images[bg], 0, 0, this.canvas.width, this.canvas.height);
 		}
 		this.raindrops.forEach(rain => rain.draw(ctx));
+		// If we're on original screen choose whether to play regular
+		// or take weekly challenge
+		if (this.inwc !== false && this.inwc !== true) {
+			this.wcScreen.draw(ctx);
+			return;
+		}
 		for (let i=0; i<this.clouds.length; i++) {
 			this.clouds[i].draw(ctx);
 		}
@@ -749,8 +812,36 @@ class Game {
 		if (this.lives <= 0) {
 			ctx.font = '88px HunimalSans';
 			ctx.fillText('Game Over!', 150, 300);
+		// Weekly challenge time remaining
+		} else if (this.inwc) {
+			if (this.wcTime > 5*60) {
+				this.wcTime = 5*60;
+			}
+			const secRem = 5*60 - this.wcTime;
+			const wcSec = secRem % 60;
+			const wcSec2 = wcSec < 10 ? '0' + wcSec : wcSec;
+			const wcMin = Math.floor(secRem/60);
+			ctx.save();
+			ctx.font = '24px HunimalSans';
+			ctx.globalAlpha = 0.8;
+			ctx.fillStyle = '#fff';
+			ctx.fillRect(10, 550, 300, 40);
+			ctx.globalAlpha = 1;
+			ctx.strokeStyle = '#aaa';
+			ctx.strokeRect(10, 550, 300, 40);
+			ctx.fillStyle = '#000';
+			ctx.fillText(`Challenge Time Left: ${wcMin}:${wcSec2}`, 20, 575);
+			ctx.restore();
 		}
 	}
+
+	startAfterInteraction() {
+		// Copied from started code
+		this.started = true;
+		this.sounds.playMusic(this.currentMusic.toString());
+		this.selected = this.clouds.at(-1);
+	}
+
 
 	start() {
 		this.running = true;
