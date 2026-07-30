@@ -508,7 +508,7 @@ class Game {
 			yes: () => {
 				this.inwc = true;
 				this.name = this.wcScreen.field.text;
-				fetch('../go/week1.json')
+				fetch('/go/week2.json')
 				.then(resp => resp.json())
 				.then(json => {
 					this.wcQs = json;
@@ -793,7 +793,7 @@ class Game {
 				|| this.wcTime >= 5*60)) {
 			if (!this.fetchedPct) {
 				this.fetchedPct = true;
-				fetch(`weeklyStats.php?week=1&name=${this.name}&score=${this.score}`)
+				fetch(`weeklyStats.php?week=2&name=${this.name}&score=${this.score}`)
 				.then(resp => resp.json())
 				.then(json => {
 					this.topPct = json.topPct.toFixed(1);
