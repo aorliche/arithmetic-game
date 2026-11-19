@@ -302,41 +302,51 @@ class Cloud {
 	}
 
 	makeQuestion() {
+		function getMultNumbers(game) {
+			const bag1 = [];
+			const bag2 = [];
+			for (let i=0; i<10; i++) {
+				if (game.multChoice1[i]) {
+					bag1.push(Math.floor(10*Math.random())+10*i)
+					if (bag1.at(-1) == 0) {
+						bag1.pop();
+						bag1.push(1);
+					}
+				}
+				if (game.multChoice2[i]) {
+					bag2.push(Math.floor(10*Math.random())+10*i)
+					if (bag2.at(-1) == 0) {
+						bag2.pop();
+						bag2.push(1);
+					}
+				}
+			}
+			if (bag1.length == 0) {
+				bag1.push(Math.floor(99*Math.random())+1);
+			}
+			if (bag2.length == 0) {
+				bag2.push(Math.floor(99*Math.random())+1);
+			}
+			const num1 = bag1[Math.floor(bag1.length*Math.random())];
+			const num2 = bag2[Math.floor(bag2.length*Math.random())];
+			return [num1, num2];
+		}
 		const ops = getCheckedOps();
 		this.op = ops[Math.floor(ops.length*Math.random())];
 		// Mult choices
 		if (this.op == 'mult') {
 			// David's special request
 			if ($('#mult-two-digits').checked) {
-				this.num1 = Math.floor(9900*Math.random())+100;
-				this.num2 = Math.floor(9900*Math.random())+100;
+				//this.num1 = Math.floor(9900*Math.random())+100;
+				//this.num2 = Math.floor(9900*Math.random())+100;
+				const n1min = parseInt($('#num1min').value);
+				const n1max = parseInt($('#num1max').value);
+				const n2min = parseInt($('#num2min').value);
+				const n2max = parseInt($('#num2max').value);
+				this.num1 = n1min + Math.round(Math.random()*(n1max-n1min));
+				this.num2 = n2min + Math.round(Math.random()*(n2max-n2min));
 			} else {
-				const bag1 = [];
-				const bag2 = [];
-				for (let i=0; i<10; i++) {
-					if (this.game.multChoice1[i]) {
-						bag1.push(Math.floor(10*Math.random())+10*i)
-						if (bag1.at(-1) == 0) {
-							bag1.pop();
-							bag1.push(1);
-						}
-					}
-					if (this.game.multChoice2[i]) {
-						bag2.push(Math.floor(10*Math.random())+10*i)
-						if (bag2.at(-1) == 0) {
-							bag2.pop();
-							bag2.push(1);
-						}
-					}
-				}
-				if (bag1.length == 0) {
-					bag1.push(Math.floor(99*Math.random())+1);
-				}
-				if (bag2.length == 0) {
-					bag2.push(Math.floor(99*Math.random())+1);
-				}
-				this.num1 = bag1[Math.floor(bag1.length*Math.random())];
-				this.num2 = bag2[Math.floor(bag2.length*Math.random())];
+				[this.num1, this.num2] = getMultNumbers(this.game);
 			}
 		}
 		//this.num1 = Math.floor(99*Math.random())+1;
@@ -726,6 +736,62 @@ class Game {
 			e.preventDefault();
 			this.curBackgroundIdx = (this.curBackgroundIdx+1)%this.backgrounds.length;
 		});
+		// David's dumb request for two-digit mult options
+		// Should have folded similar code into a function but too lazy...
+		$('#num1min-disp').innerText = numToHunString(parseInt($('#num1min').value));
+		$('#num1max-disp').innerText = numToHunString(parseInt($('#num1max').value));
+		$('#num2min-disp').innerText = numToHunString(parseInt($('#num2min').value));
+		$('#num2max-disp').innerText = numToHunString(parseInt($('#num2max').value));
+		$('#num1min').addEventListener('input', e => {
+			const min = parseInt($('#num1min').value);
+			const max = parseInt($('#num1max').value);
+			if (min <= max) {
+				$('#num1min-disp').innerText = numToHunString(min);
+			} else {
+				$('#num1min').value = max;
+			}
+		});
+		$('#num1max').addEventListener('input', e => {
+			const min = parseInt($('#num1min').value);
+			const max = parseInt($('#num1max').value);
+			if (min <= max) {
+				$('#num1max-disp').innerText = numToHunString(max);
+			} else {
+				$('#num1max').value = min;
+			}
+		});
+		$('#num2min').addEventListener('input', e => {
+			const min = parseInt($('#num2min').value);
+			const max = parseInt($('#num2max').value);
+			if (min <= max) {
+				$('#num2min-disp').innerText = numToHunString(min);
+			} else {
+				$('#num2min').value = max;
+			}
+		});
+		$('#num2max').addEventListener('input', e => {
+			const min = parseInt($('#num2min').value);
+			const max = parseInt($('#num2max').value);
+			if (min <= max) {
+				$('#num2max-disp').innerText = numToHunString(max);
+			} else {
+				$('#num2max').value = min;
+			}
+		});
+		// Display options
+		$('#mult-two-digits').addEventListener('input', e => {
+			if ($('#mult-two-digits').checked) {
+				$('#mult-two-digits-opts').style.display = 'block';
+			} else {
+				$('#mult-two-digits-opts').style.display = 'none';
+			}
+		});
+		// I am the worst
+		if ($('#mult-two-digits').checked) {
+			$('#mult-two-digits-opts').style.display = 'block';
+		} else {
+			$('#mult-two-digits-opts').style.display = 'none';
+		}
 	}
 
 	loadImages() {
