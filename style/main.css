@@ -30,6 +30,6 @@
 	vertical-align: top;
 }
 
-#multchoice {
+#multchoice, #multchoice-num1, #multchoice-num2 {
 	border: 1px solid black;
 }
