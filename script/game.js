@@ -322,10 +322,12 @@ class Cloud {
 				}
 			}
 			if (bag1.length == 0) {
-				bag1.push(Math.floor(99*Math.random())+1);
+				//bag1.push(Math.floor(99*Math.random())+1);
+				bag1.push(0);
 			}
 			if (bag2.length == 0) {
-				bag2.push(Math.floor(99*Math.random())+1);
+				//bag2.push(Math.floor(99*Math.random())+1);
+				bag2.push(0);
 			}
 			const num1 = bag1[Math.floor(bag1.length*Math.random())];
 			const num2 = bag2[Math.floor(bag2.length*Math.random())];
